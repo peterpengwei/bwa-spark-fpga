@@ -92,7 +92,7 @@ object BWAMEMSpark {
     //val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://Jc11:9000/user/ytchen/data/HCC1954_1_10Mreads", 2)
     //val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://Jc11:9000/user/pengwei/data/ManmadeFASTQ.fq", 41)
     //val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://cdsc0:9000/user/pengwei/data/ManmadeFASTQ_1.fq", 41)
-    val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://cdsc0:9000/user/pengwei/data/ManmadeFASTQ_1.fq", 39)
+    val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://cdsc0:9000/user/pengwei/data/ManmadeFASTQ_1.fq", 1)
     //val fastqRDDLoader = new FASTQRDDLoader(sc, "hdfs://Jc11:9000/user/pengwei/data/HCC1954_1.fq", 201)
     //val fastqRDD = fastqRDDLoader.RDDLoad("hdfs://Jc11:9000/user/ytchen/data/ERR013140_1.filt.fastq_new/0")
     val fastqRDD = fastqRDDLoader.RDDLoadAll
@@ -133,7 +133,71 @@ object BWAMEMSpark {
 
     // *****     PROFILING    *****
     val profilingData = fastqRDD.mapPartitions(it2ArrayIt).collect
+    var batch_idx = 0
+    var swBatchInitTime: Long = 0
+    var swBatchRuntime: Long = 0
+    var swBatchOnFPGA: Long = 0
+    var swBatchOnCPU: Long = 0
+    var swBatchPostProc: Long = 0
+    var FPGADataPreparation: Long = 0
+    var FPGARoutine: Long = 0
+    var FPGADataPostProcessing: Long = 0   
+    var generatedChainTime: Long = 0
+    var filterChainTime: Long = 0
+    var chainToAlnTime: Long = 0
+    var sortAndDedupTime: Long = 0
+    var FPGATaskNum: Long = 0
+    var CPUTaskNum: Long = 0
+    profilingData.foreach(s => {
+      println("Batch Id: " + batch_idx)
+      println("generatedChainTime: " + s.generatedChainTime)
+      generatedChainTime += s.generatedChainTime
+      println("filterChainTime: " + s.filterChainTime)
+      filterChainTime += s.filterChainTime
+      println("chainToAlnTime: " + s.chainToAlnTime)
+      chainToAlnTime += s.chainToAlnTime
+      println("sortAndDedupTime: " + s.sortAndDedupTime)
+      sortAndDedupTime += s.sortAndDedupTime
+      println("FPGATaskNum: " + s.FPGATaskNum)
+      FPGATaskNum += s.FPGATaskNum
+      println("CPUTaskNum: " + s.CPUTaskNum)
+      CPUTaskNum += s.CPUTaskNum
 
+      println("Init SWBatch Time: " + s.initSWBatchTime)
+      swBatchInitTime += s.initSWBatchTime
+      println("SWBatch Runtime: " + s.SWBatchRuntime)
+      swBatchRuntime += s.SWBatchRuntime
+      println("SWBatch running On FPGA Time: " + s.SWBatchOnFPGA)
+      swBatchOnFPGA += s.SWBatchOnFPGA
+      println("SWBatch running On CPU Time: " + (s.SWBatchRuntime - s.SWBatchOnFPGA))
+      swBatchOnCPU += (s.SWBatchRuntime - s.SWBatchOnFPGA)
+      println("Post Processing Time: " + s.postProcessSWBatchTime)
+      swBatchPostProc += s.postProcessSWBatchTime
+      println("FPGA Data Preparation Time: " + s.FPGADataPreProcTime)
+      FPGADataPreparation += s.FPGADataPreProcTime
+      println("FPGA Routine Runtime: " + s.FPGARoutineRuntime)
+      FPGARoutine += s.FPGARoutineRuntime
+      println("FPGA Data Post-Processing Time: " + s.FPGADataPostProcTime)
+      FPGADataPostProcessing += s.FPGADataPostProcTime
+      batch_idx += 1
+    })
+
+    println("Summary:")
+    println("generatedChainTime: " + (generatedChainTime.asInstanceOf[Double] / 10E9))
+    println("filterChainTime: " + (filterChainTime.asInstanceOf[Double] / 10E9))
+    println("chainToAlnTime: " + (chainToAlnTime.asInstanceOf[Double] / 10E9))
+    println("sortAndDedupTime: " + (sortAndDedupTime.asInstanceOf[Double] / 10E9))
+    println("FPGATaskNum: " + FPGATaskNum)
+    println("CPUTaskNum: " + CPUTaskNum)
+    println("Init SWBatch Time: " + (swBatchInitTime.asInstanceOf[Double] / 10E9))
+    println("SWBatch Runtime: " + (swBatchRuntime.asInstanceOf[Double] / 10E9))
+    println("SWBatch running On FPGA Time: " + (swBatchOnFPGA.asInstanceOf[Double] / 10E9))
+    println("SWBatch running On CPU Time: " + (swBatchOnCPU.asInstanceOf[Double] / 10E9))
+    println("Post Processing Time: " + (swBatchPostProc.asInstanceOf[Double] / 10E9))
+    println("FPGA Data Preparation Time: " + (FPGADataPreparation.asInstanceOf[Double] / 10E9))
+    println("FPGA Routine Runtime: " + (FPGARoutine.asInstanceOf[Double] / 10E9))
+    println("FPGA Data Post-Processing Time: " + (FPGADataPostProcessing.asInstanceOf[Double] / 10E9))
+    
     //if (useFPGA) 
     //  conn.closeConnection();
     

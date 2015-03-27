@@ -308,8 +308,9 @@ object MemChainToAlignBatched {
 			   numOfReads: Int,
 		           preResultsOfSW: Array[Array[SWPreResultType]],
 			   chainsFilteredArray: Array[Array[MemChainType]],
-			   regArrays: Array[MemAlnRegArrayType]
-	                  ): SWBatchTimeBreakdown = {
+			   regArrays: Array[MemAlnRegArrayType],
+                           timeBreakdown: SWBatchTimeBreakdown
+	                  ) = {
     
 
     // The coordinate for each read: (chain No., seed No.)
@@ -392,8 +393,6 @@ object MemChainToAlignBatched {
     var fpgaExtTasks = new Array[ExtParam](numOfReads)
     var fpgaExtResults = new Array[ExtRet](numOfReads)
     var taskIdx = 0
-
-    var timeBreakdown = new SWBatchTimeBreakdown
 
     while (!isFinished) {
 
@@ -521,6 +520,7 @@ object MemChainToAlignBatched {
           timeBreakdown.FPGADataPreProcTime += ret(0)
           timeBreakdown.FPGARoutineRuntime += ret(1)
           timeBreakdown.FPGADataPostProcTime += ret(2)
+          timeBreakdown.FPGATaskNum += taskIdx
 
           // *****   PROFILING    *******
           val SWFPGAEndTime = System.nanoTime
@@ -558,6 +558,7 @@ object MemChainToAlignBatched {
 	}
 	else {
           i = 0;
+          timeBreakdown.CPUTaskNum += taskIdx
           while (i < taskIdx) {
               fpgaExtResults(i) = extension(fpgaExtTasks(i))
               i = i+1
@@ -566,6 +567,7 @@ object MemChainToAlignBatched {
       }
       else {
         i = 0;
+        timeBreakdown.CPUTaskNum += taskIdx
         while (i < taskIdx) {
             fpgaExtResults(i) = extension(fpgaExtTasks(i))
             i = i+1
