@@ -35,7 +35,10 @@ object BWAMemWorker1Batched {
     //for now, we only focus on single sequence alignment
     //if (!(opt.flag & MEM_F_PE)) {
     if (true) {
-
+      // *****    PROFILING     *****
+      var profileData = new SWBatchTimeBreakdown
+      val startTime = System.currentTimeMillis
+ 
       //pre-process: transform A/C/G/T to 0,1,2,3
 
       def locusEncode(locus: Char): Byte = {
@@ -85,6 +88,10 @@ object BWAMemWorker1Batched {
 	i = i+1;
       }
 
+      // *****   PROFILING    *******
+      val generatedChainEndTime = System.currentTimeMillis
+      profileData.generatedChainTime = generatedChainEndTime - startTime
+
       //second step: filter chains
       //val chainsFiltered = memChainFilter(opt, chains)
       //val chainsFilteredArray = chainsArray.map( ele => memChainFilter(opt, ele) )
@@ -131,11 +138,17 @@ object BWAMemWorker1Batched {
       }
       if (debugLevel == 1) println("Finished the pre-processing part")
 
+      // *****   PROFILING    *******                
+      val filterChainEndTime = System.currentTimeMillis    
+      profileData.filterChainTime = filterChainEndTime - generatedChainEndTime
 
       //memChainToAlnBatched(opt, bns.l_pac, pac, lenArray, readArray, numOfReads, preResultsOfSW, chainsFilteredArray, regArrays)
 
+      memChainToAlnBatched(opt, bns.l_pac, pac, lenArray, readArray, numOfReads, preResultsOfSW, chainsFilteredArray, regArrays, profileData)
+
       // *****   PROFILING    *******
-      val profileData = memChainToAlnBatched(opt, bns.l_pac, pac, lenArray, readArray, numOfReads, preResultsOfSW, chainsFilteredArray, regArrays)
+      val chainToAlnEndTime = System.currentTimeMillis
+      profileData.chainToAlnTime = chainToAlnEndTime - filterChainEndTime
 
       if (debugLevel == 1) println("Finished the batched-processing part")
 
@@ -149,8 +162,10 @@ object BWAMemWorker1Batched {
       }
 
       //readRetArray
-
+      
       // *****   PROFILING    *******
+      val sortAndDedupEndTime = System.currentTimeMillis
+      profileData.sortAndDedupTime = sortAndDedupEndTime - chainToAlnEndTime
       profileData
     }
     else {

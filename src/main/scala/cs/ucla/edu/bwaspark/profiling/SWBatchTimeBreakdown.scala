@@ -15,6 +15,12 @@ class SWBatchTimeBreakdown extends Serializable {
   var FPGADataPreProcTime: Long = 0
   var FPGARoutineRuntime: Long = 0
   var FPGADataPostProcTime: Long = 0
+  var FPGATaskNum: Long = 0
+  var CPUTaskNum: Long = 0
+  var generatedChainTime: Long = 0
+  var filterChainTime: Long = 0
+  var chainToAlnTime: Long = 0
+  var sortAndDedupTime: Long = 0
 
   private def writeObject(out: ObjectOutputStream) {
     out.writeBoolean(isFPGA)
@@ -25,6 +31,12 @@ class SWBatchTimeBreakdown extends Serializable {
     out.writeLong(FPGADataPreProcTime)
     out.writeLong(FPGARoutineRuntime)
     out.writeLong(FPGADataPostProcTime)
+    out.writeLong(FPGATaskNum)
+    out.writeLong(CPUTaskNum)
+    out.writeLong(generatedChainTime)
+    out.writeLong(filterChainTime)
+    out.writeLong(chainToAlnTime)
+    out.writeLong(sortAndDedupTime)
   }
 
   private def readObject(in: ObjectInputStream) {
@@ -36,6 +48,12 @@ class SWBatchTimeBreakdown extends Serializable {
     FPGADataPreProcTime = in.readLong
     FPGARoutineRuntime = in.readLong
     FPGADataPreProcTime = in.readLong
+    FPGATaskNum = in.readLong
+    CPUTaskNum = in.readLong
+    generatedChainTime = in.readLong
+    filterChainTime = in.readLong
+    chainToAlnTime = in.readLong
+    sortAndDedupTime = in.readLong
   }
 
   private def readObjectNoData() {
