@@ -37,7 +37,7 @@ object BWAMemWorker1Batched {
     if (true) {
       // *****    PROFILING     *****
       var profileData = new SWBatchTimeBreakdown
-      val startTime = System.nanoTime
+      val startTime = System.currentTimeMillis
  
       //pre-process: transform A/C/G/T to 0,1,2,3
 
@@ -89,7 +89,7 @@ object BWAMemWorker1Batched {
       }
 
       // *****   PROFILING    *******
-      val generatedChainEndTime = System.nanoTime
+      val generatedChainEndTime = System.currentTimeMillis
       profileData.generatedChainTime = generatedChainEndTime - startTime
 
       //second step: filter chains
@@ -139,14 +139,15 @@ object BWAMemWorker1Batched {
       if (debugLevel == 1) println("Finished the pre-processing part")
 
       // *****   PROFILING    *******                
-      val filterChainEndTime = System.nanoTime    
+      val filterChainEndTime = System.currentTimeMillis    
       profileData.filterChainTime = filterChainEndTime - generatedChainEndTime
 
       //memChainToAlnBatched(opt, bns.l_pac, pac, lenArray, readArray, numOfReads, preResultsOfSW, chainsFilteredArray, regArrays)
 
-      // *****   PROFILING    *******
       memChainToAlnBatched(opt, bns.l_pac, pac, lenArray, readArray, numOfReads, preResultsOfSW, chainsFilteredArray, regArrays, profileData)
-      val chainToAlnEndTime = System.nanoTime
+
+      // *****   PROFILING    *******
+      val chainToAlnEndTime = System.currentTimeMillis
       profileData.chainToAlnTime = chainToAlnEndTime - filterChainEndTime
 
       if (debugLevel == 1) println("Finished the batched-processing part")
@@ -163,7 +164,7 @@ object BWAMemWorker1Batched {
       //readRetArray
       
       // *****   PROFILING    *******
-      val sortAndDedupEndTime = System.nanoTime
+      val sortAndDedupEndTime = System.currentTimeMillis
       profileData.sortAndDedupTime = sortAndDedupEndTime - chainToAlnEndTime
       profileData
     }
