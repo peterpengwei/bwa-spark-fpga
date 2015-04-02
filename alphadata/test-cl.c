@@ -54,72 +54,9 @@ ALL TIMES.
 #include <sys/stat.h>
 #include <CL/opencl.h>
 
-#include <sys/time.h>
-#include <time.h>
 #include "my_socket.h"
+#include "my_timer.h"
 
-////////////////////////////////////////////////////////////////////////////////
-typedef struct timespec timespec;
-timespec diff(timespec start, timespec end);
-timespec sum(timespec t1, timespec t2);
-void printTimeSpec(timespec t);
-timespec tic( );
-void toc( timespec* start_time );
-double get_current_msec( );
-
-timespec diff(timespec start, timespec end)
-{   
-	timespec temp;
-	if ((end.tv_nsec-start.tv_nsec)<0) {
-		temp.tv_sec = end.tv_sec-start.tv_sec-1;
-		temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-	} else {
-		temp.tv_sec = end.tv_sec-start.tv_sec;
-		temp.tv_nsec = end.tv_nsec-start.tv_nsec;
-	}
-	return temp;
-}
-
-timespec sum(timespec t1, timespec t2) {
-	timespec temp;
-	if (t1.tv_nsec + t2.tv_nsec >= 1000000000) {
-		temp.tv_sec = t1.tv_sec + t2.tv_sec + 1;
-		temp.tv_nsec = t1.tv_nsec + t2.tv_nsec - 1000000000;
-	} else {
-		temp.tv_sec = t1.tv_sec + t2.tv_sec;
-		temp.tv_nsec = t1.tv_nsec + t2.tv_nsec;
-	}
-	return temp;
-}
-
-void printTimeSpec(timespec t) {
-	//printf("elapsed time: %d.%09d\n", (int)t.tv_sec, (int)t.tv_nsec);
-}
-
-timespec tic( )
-{
-	timespec start_time;
-	clock_gettime(CLOCK_REALTIME, &start_time);
-	return start_time;
-}
-
-void toc( timespec* start_time )
-{
-	timespec current_time;
-	clock_gettime(CLOCK_REALTIME, &current_time);
-	printTimeSpec( diff( *start_time, current_time ) );
-	*start_time = current_time;
-}
-
-double get_current_msec( )
-{
-	timespec current_time;
-	clock_gettime(CLOCK_REALTIME, &current_time);
-	return current_time.tv_nsec/1e6+current_time.tv_sec*1e3;
-}
-
-// Use a static matrix for simplicity
-//
 #define DATA_SIZE 51200
 #define TOTAL_TASK_NUMS 1024
 #define RESULT_SIZE TOTAL_TASK_NUMS*4
@@ -321,18 +258,23 @@ int main(int argc, char** argv)
 	  printf("Succeed to allocate device memory!\n");
   }
 
-  // Get the start time
-  timespec timer = tic( );
   printf("\n************* Welcome to UCLA FPGA agent! **********\n");
   int listenfd = setupSocket( 5000 );
   int taskNum = -1;
 
+  // Get the start time
+  timespec timer = tic( );
+  timespec socSendTime = diff(timer, timer);
+  timespec socRecvTime = diff(timer, timer);
+  timespec exeTime = diff(timer, timer);
   while (true) {
 
     int connfd = acceptSocket(listenfd);
     //printf("\n************* Got a new task! *************\n");
     
+    timer = tic();
     recv_large_array(connfd, (char*)a, DATA_SIZE*sizeof(int));
+    accTime (&socSendTime, &timer);
     taskNum = a[2];
     //printf("\nparameter recieved --- \n");
      //Write our data set into the input array in device memory 
@@ -388,14 +330,21 @@ int main(int argc, char** argv)
     ////}
   
     clWaitForEvents(1, &readevent);
+    accTime(&exeTime, &timer);
   
     // Get the execution time
     //toc(&timer);
 
     send_large_array(connfd, (char*)results, sizeof(int)*RESULT_SIZE);
+    accTime(&socRecvTime, &timer);
     //printf("\n************* Task finished! *************\n");
 
     close(connfd);
+    printf("\n**********timing begin**********\n");
+    printTimeSpec(socSendTime);
+    printTimeSpec(socRecvTime);
+    printTimeSpec(exeTime);
+    printf("\n**********timing end**********\n");
   }
     
   // Shutdown and cleanup

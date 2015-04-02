@@ -22,7 +22,7 @@ int setupSocket( int port )
 	err = setsockopt(listenfd, SOL_SOCKET, SO_SNDBUF, &buf_size, sizeof(buf_size));
 	err = setsockopt(listenfd, SOL_SOCKET, SO_RCVBUF, &buf_size, sizeof(buf_size));
 	err = getsockopt(listenfd, SOL_SOCKET, SO_SNDBUF, &buf_size, &size);
-	printf("socket send buffer size: %d\n", buf_size);
+	//printf("socket send buffer size: %d\n", buf_size);
 
 	memset(&serv_addr, '0', sizeof(serv_addr));
 	
@@ -34,22 +34,22 @@ int setupSocket( int port )
 
 	listen(listenfd, 24); 
 
-    printf("socket listening port is ready\n");
+    //printf("socket listening port is ready\n");
 
     return listenfd;
 }
 
 int acceptSocket( int listenfd )
 {
-    printf("waiting for host to connect\n");
+    //printf("waiting for host to connect\n");
     int connfd = accept(listenfd, (struct sockaddr*)NULL, NULL); 
     
     if( connfd < 0 )
     {
-        printf("ERROR on accept\n");
+        //printf("ERROR on accept\n");
         exit(1);
     }
-    printf("host connects, start transfering data.\n");
+    //printf("host connects, start transfering data.\n");
     return connfd;
 }
 
@@ -63,7 +63,7 @@ void recv_large_array( int connfd, char* data, size_t nbyte_exp )
         if( start + packet_size > nbyte_exp ) packet_size = nbyte_exp - start;
         nbyte += recv(connfd, data + start, packet_size, MSG_WAITALL);
     }
-    printf("received data for %d bytes --- \n", (int)nbyte);
+    //printf("received data for %d bytes --- \n", (int)nbyte);
 }
 
 int recv_param( int connfd )
@@ -83,7 +83,7 @@ void send_large_array( int connfd, char* data, size_t nbyte_exp )
         if( start + packet_size > nbyte_exp ) packet_size = nbyte_exp - start;
         nbyte += send(connfd, data + start, packet_size, 0);
     }
-    printf("sent result for %d bytes --- \n", (int)nbyte);
+    //printf("sent result for %d bytes --- \n", (int)nbyte);
 }
 
 #endif

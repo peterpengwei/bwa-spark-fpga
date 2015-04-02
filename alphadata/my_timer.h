@@ -49,4 +49,14 @@ void toc( timespec* start_time )
     *start_time = current_time;
 }
 
+void accTime (timespec* accSpec, timespec* oldTime) {
+    timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    timespec delta = diff(*oldTime, current_time);
+    //printTimeSpec(delta);
+    *oldTime = current_time;
+    *accSpec = sum(*accSpec, delta);
+    //printTimeSpec(*accSpec);
+}
+
 #endif
