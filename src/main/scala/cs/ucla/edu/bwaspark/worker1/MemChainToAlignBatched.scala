@@ -197,7 +197,6 @@ object MemChainToAlignBatched {
         i = i + 1
       }
 	    //writer.println("Start writing queries and targets");
-      //conn.send(taskPos)
 
       // *****   PROFILING    *******
       val JavaHostSendReqTime = System.nanoTime
@@ -205,14 +204,17 @@ object MemChainToAlignBatched {
 
       val conn = new Connector2FPGA("127.0.0.1", 5000);
       conn.buildConnection( 1 );
-      conn.send(buf1);
+      assert (taskPos == counter8/8 + buf1Len/4)
+      println("[DEBUG] taskPos = " + taskPos)
+      conn.send(taskPos*4)
+      conn.send(buf1, taskPos*4);
 
       //writer.println("data transferred");
       //timer1.report( );
 
       //println("receive variables: " + taskNum * retValues)
-      //val bufRet = conn.receive_short(taskNum * retValues)
-      val bufRet = conn.receive_short(RESULT_SIZE)
+      val bufRet = conn.receive_short(taskNum * retValues)
+      //val bufRet = conn.receive_short(RESULT_SIZE)
 
       // *****   PROFILING    *******
       val JavaHostReceiveReqTime = System.nanoTime

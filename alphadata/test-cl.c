@@ -246,8 +246,8 @@ int main(int argc, char** argv)
 
   // Create the input and output arrays in device memory for our calculation
   //
-  input_a = clCreateBuffer(context,  CL_MEM_READ_ONLY,  sizeof(int) * DATA_SIZE, NULL, NULL);
-  output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(int) * RESULT_SIZE, NULL, NULL);
+  input_a = clCreateBuffer(context,  CL_MEM_READ_ONLY,  DATA_SIZE*sizeof(int), NULL, NULL);
+  output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, RESULT_SIZE*sizeof(int), NULL, NULL);
   if (!input_a || !output)
   {
     printf("Error: Failed to allocate device memory!\n");
@@ -261,6 +261,7 @@ int main(int argc, char** argv)
   printf("\n************* Welcome to UCLA FPGA agent! **********\n");
   int listenfd = setupSocket( 5000 );
   int taskNum = -1;
+  int totalLen = -1;
 
   // Get the start time
   timespec timer = tic( );
@@ -273,13 +274,15 @@ int main(int argc, char** argv)
     //printf("\n************* Got a new task! *************\n");
     
     timer = tic();
-    recv_large_array(connfd, (char*)a, DATA_SIZE*sizeof(int));
+    totalLen = recv_param(connfd);
+    printf ("\nparam received: %d\n", totalLen);
+    recv_large_array(connfd, (char*)a, totalLen);
     accTime (&socSendTime, &timer);
     taskNum = a[2];
-    //printf("\nparameter recieved --- \n");
+    printf("\nparameter recieved --- \n");
      //Write our data set into the input array in device memory 
     
-    clEnqueueWriteBuffer(commands, input_a, CL_TRUE, 0, sizeof(int) * DATA_SIZE, a, 0, NULL, NULL);
+    clEnqueueWriteBuffer(commands, input_a, CL_TRUE, 0, totalLen, a, 0, NULL, NULL);
     ////err = clEnqueueWriteBuffer(commands, input_a, CL_TRUE, 0, sizeof(int) * DATA_SIZE, a, 0, NULL, NULL);
     ////if (err != CL_SUCCESS)
     ////{
@@ -320,7 +323,7 @@ int main(int argc, char** argv)
     // Read back the results from the device to verify the output
     //
     cl_event readevent;
-    clEnqueueReadBuffer( commands, output, CL_TRUE, 0, sizeof(int) * RESULT_SIZE, results, 0, NULL, &readevent );  
+    clEnqueueReadBuffer( commands, output, CL_TRUE, 0, 16*taskNum, results, 0, NULL, &readevent );  
     ////err = clEnqueueReadBuffer( commands, output, CL_TRUE, 0, sizeof(int) * RESULT_SIZE, results, 0, NULL, &readevent );  
     ////if (err != CL_SUCCESS)
     ////{
@@ -335,9 +338,9 @@ int main(int argc, char** argv)
     // Get the execution time
     //toc(&timer);
 
-    send_large_array(connfd, (char*)results, sizeof(int)*RESULT_SIZE);
+    send_large_array(connfd, (char*)results, 16*taskNum);
     accTime(&socRecvTime, &timer);
-    //printf("\n************* Task finished! *************\n");
+    printf("\n************* Task finished! *************\n");
 
     close(connfd);
     printf("\n**********timing begin**********\n");
